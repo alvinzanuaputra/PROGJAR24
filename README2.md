@@ -43,30 +43,30 @@ Membuat port di port 45000 dengan transport TCP
 1.	Jalankan mesin 1. Kemudian, pindah ke direktori /work/progjar/progjar3/threading_examples dengan command : cd progjar/progjar3/threading_examples
 2.	Ubah port yang ada di dalam file server_thread.py dari ‘8889’ menjadi ‘45000’ dengan command : vim server_thread.py
 
-![alt text](image-18.png)
+![alt text](./ima/image-18.png)
  
 3.	Install netcat di mesin1, mesin2, dan mesin3 dengan command : sudo apt install netcat
 
 4.	Jalankan program server_thread.py di mesin 1 : python3 server_thread.py
 Hasil :
 
-![alt text](image-19.png)
+![alt text](./ima/image-19.png)
  
 5.	Lakukan pengecekan apakah mesin 2 dan mesin 3 bisa terhubung dengan server dengan melakukan netcat : nc -vvv 172.16.16.101 45000
 
-![alt text](image-20.png)
+![alt text](./ima/image-20.png)
 
 Mesin 1 : 
 
-![alt text](image-21.png)
+![alt text](./ima/image-21.png)
 
 Mesin 2 :
 
-![alt text](image-22.png)
+![alt text](./ima/image-22.png)
  
 Mesin 3 : 
 
-![alt text](image-23.png)
+![alt text](./ima/image-23.png)
  
 Analisis :
 Pada capture wireshark mesin 1 dengan filter tcp.port == 45000, terlihat dua sesi TCP terpisah antara server di 172.16.16.101 dan dua klien, yaitu 172.16.16.102 (mesin 2) dan 172.16.16.103 (mesin 3). Untuk setiap klien, proses dimulai dengan three-way handshake (klien mengirim SYN, server membalas SYN-ACK, kemudian klien mengirim ACK), menandakan berhasilnya pembukaan koneksi pada port 45000. Segmen TCP berukuran 76 byte kemungkinan besar mengangkut payload—dalam kasus ini string waktu yang dikirim server—karena setelah itu nomor urut (Seq) meningkat dari 0 ke 1. Setelah pengiriman selesai, koneksi ditutup secara tertib: kedua pihak saling bertukar segmen FIN-ACK untuk mengakhiri sesi, diikuti oleh ACK terakhir yang menegaskan penutupan. Pola ini menunjukkan bahwa server time-thread berjalan sesuai harapan, menerima koneksi, mengirim data waktu, lalu menutup socket dengan benar mengikuti aturan TCP.
@@ -84,12 +84,12 @@ ii. Setiap request dapat diakhiri dengan string "QUIT" yang diakhiri dengan kara
 ❖	Langkah-langkah pengerjaan
 1.	Ubah isi file server_thread.py pada mesin 1 menggunakan command : vim server_thread.py. Ubah sehingga menjadi seperti berikut :
 
-![alt text](image-24.png)
+![alt text](./ima/image-24.png)
  
 2.	Jalankan server_thread.py dengan command python3 server_thread.py di mesin1.
 3.	Uji atau berinteraksi dengan sebuah TCP-server pada IP dan port tertentu, dengan mengirimkan payload mentah (TIME + berbagai control characters) untuk melihat bagaimana server merespon atau memproses terminator baris (\2 atau \n) serta escape yang berbeda.
 
-![alt text](image-25.png)
+![alt text](./ima/image-25.png)
  
 Analisis :
 Berdasarkan percobaan yang sudah dilakukan, server multithreading pada server_thread.py berhasil melayani beberapa klien secara concurrent tanpa saling mengganggu: setiap kali ada koneksi baru, sebuah thread baru dibuat dan mencatat log “connection from …”. Saat klien mengirimkan payload yang diawali dengan string “TIME” dan diakhiri CR (\r, 13) dan LF (\n, 10), server langsung membaca buffer, mendeteksi perintah “TIME”, lalu mengirim kembali data yang sama (termasuk terminator baris) sebelum menutup koneksi. Hal ini terbukti ketika menjalankan printf "TIME\r\n" | nc 172.16.16.101 45000 yang mengembalikan b'TIME\r\n'. Selain itu, jika dikirimkan perintah “QUIT\r\n”, loop pada thread klien akan berhenti dan socket ditutup dengan rapi. Dengan demikian, implementasi pengenalan terminator baris dan escape sequence sudah sesuai spesifikasi, serta mekanisme threading-nya memastikan semua request ditangani secara simultan dan isolated.
@@ -103,15 +103,15 @@ III.	<jam> berisikan info jam dalam format "hh:mm:ss" dan diakhiri dengan karakt
 ❖	Langkah-langkah pengerjaan
 1.	Ubah isi file server_thread.py pada mesin 1 menggunakan command : vim server_thread.py. Ubah sehingga menjadi seperti berikut :
 
-![alt text](image-26.png)
+![alt text](./ima/image-26.png)
 
  
 2.	Jalankan server_thread.py dengan command python3 server_thread.py di mesin 1.
 3.	Uji di mesin 2
 
-![alt text](image-27.png)
+![alt text](./ima/image-27.png)
 
-![alt text](image-28.png)
+![alt text](./ima/image-28.png)
  
 
 Analisis : 
