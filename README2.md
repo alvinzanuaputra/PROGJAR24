@@ -34,7 +34,7 @@ Semua poin, harus dilengkapi dengan deskripsi dan penjelasan minimum 50 kata
 ## JAWABAN
 
 Link Github File server_thread.py : 
-https://github.com/alvinzanuaputra/
+https://github.com/alvinzanuaputra/PROGJAR24/blob/main/server_thread.py
 
 Buatlah sebuah program time server dengan ketentuan sebagai berikut :
 Nomor 1.a
