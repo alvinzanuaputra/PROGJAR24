@@ -4,6 +4,7 @@ import threading
 import logging
 import time
 import sys
+from datetime import datetime
 
 class ProcessTheClient(threading.Thread):
 	def __init__(self,connection,address):
@@ -11,14 +12,58 @@ class ProcessTheClient(threading.Thread):
 		self.address = address
 		threading.Thread.__init__(self)
 
+	# def run(self):
+	# 	while True:
+	# 		data = self.connection.recv(32)
+	# 		if data:
+	# 			self.connection.sendall(data)
+	# 		else:
+	# 			break
+	# 	self.connection.close()
+	
+	# INI UNTUK POIN C
+	
 	def run(self):
 		while True:
-			data = self.connection.recv(32)
-			if data:
-				self.connection.sendall(data)
-			else:
+			data = self.connection.recv(1024)
+			if not data:
 				break
-		self.connection.close()
+			logging.warning(f"Raw data dari client: {data} ({list(data)})")  # log byte
+			message = data.decode()
+			# Respons hanya jika diakhiri \r\n
+			if message.endswith("\r\n"):
+				self.connection.sendall(b"DITERIMA\r\n")
+			else:
+				self.connection.sendall(b"DITOLAK: Tidak diakhiri CRLF\r\n")
+			if message.strip() == "QUIT":
+				break
+
+	# INI UNTUK POIN D
+	
+	# def run(self):
+	# 	while True:
+	# 		data = self.connection.recv(1024)
+	# 		if not data:
+	# 			break
+
+	# 		logging.warning(f"Raw data dari client: {data} ({list(data)})")  # Tambahan ini
+
+	# 		message = data.decode()
+	# 		if message.startswith("TIME") and message.endswith("\r\n"):
+	# 			now = datetime.now()
+	# 			response = now.strftime("JAM %d %m %y %H:%M:%S\r\n")
+	# 			self.connection.sendall(response.encode())
+
+	# 		elif message.startswith("QUIT") and message.endswith("\r\n"):
+	# 			self.connection.sendall(b"Goodbye\r\n")
+	# 			break
+
+	# 		else:
+	# 			self.connection.sendall(b"ERROR: Format tidak dikenali\r\n")
+
+	# 	self.connection.close()
+        
+
 
 class Server(threading.Thread):
 	def __init__(self):
