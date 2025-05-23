@@ -3,39 +3,67 @@ TUJUAN: melayani client dalam request file server
 
 ATURAN PROTOKOL:
 - client harus mengirimkan request dalam bentuk string
-- string harus dalam format
-  REQUEST spasi PARAMETER
-- PARAMETER dapat berkembang menjadi PARAMETER1 spasi PARAMETER2 dan seterusnya
+- string harus dalam format:
+  REQUEST spasi PARAMETER1 spasi PARAMETER2 dst.
+- Semua result akan diberikan dalam bentuk JSON
+- Diakhiri dengan karakter ASCII "\r\n\r\n"
 
 REQUEST YANG DILAYANI:
-- informasi umum:
-  * Jika request tidak dikenali akan menghasilkan pesan
-    - status: ERROR
-    - data: request tidak dikenali
-  * Semua result akan diberikan dalam bentuk JSON dan diakhiri
-    dengan character ascii code #13#10#13#10 atau "\r\n\r\n"
 
 LIST
-* TUJUAN: untuk mendapatkan daftar seluruh file yang dilayani oleh file server
+* TUJUAN: Mendapatkan daftar seluruh file yang tersedia di direktori server
 * PARAMETER: tidak ada
 * RESULT:
-- BERHASIL:
-  - status: OK
-  - data: list file
-- GAGAL:
-  - status: ERROR
-  - data: pesan kesalahan
+  - BERHASIL:
+    - status: OK
+    - data: list file
+  - GAGAL:
+    - status: ERROR
+    - data: pesan kesalahan
 
 GET
-* TUJUAN: untuk mendapatkan isi file dengan menyebutkan nama file dalam parameter
+* TUJUAN: Mengambil isi file dengan nama tertentu
 * PARAMETER:
-  - PARAMETER1 : nama file
+  - PARAMETER1: nama file
 * RESULT:
-- BERHASIL:
-  - status: OK
-  - data_namafile : nama file yang diminta
-  - data_file : isi file yang diminta (dalam bentuk base64)
-- GAGAL:
-  - status: ERROR
-  - data: pesan kesalahan
+  - BERHASIL:
+    - status: OK
+    - data_namafile: nama file
+    - data_file: isi file (dalam base64)
+  - GAGAL:
+    - status: ERROR
+    - data: pesan kesalahan
 
+UPLOAD
+* TUJUAN: Mengunggah file ke server
+* PARAMETER:
+  - PARAMETER1: nama file yang akan disimpan
+  - PARAMETER2: isi file dalam bentuk base64
+* VALIDASI:
+  - Jika file sudah ada di server, maka upload akan ditolak
+* RESULT:
+  - BERHASIL:
+    - status: OK
+    - data: nama file berhasil diupload ke server
+  - GAGAL:
+    - status: ERROR
+    - data: file sudah ada atau kesalahan lain
+
+HAPUS
+* TUJUAN: Menghapus file dari server
+* PARAMETER:
+  - PARAMETER1: nama file yang akan dihapus
+* VALIDASI:
+  - Jika file tidak ada, maka penghapusan akan ditolak
+* RESULT:
+  - BERHASIL:
+    - status: OK
+    - data: nama file berhasil dihapus dari server
+  - GAGAL:
+    - status: ERROR
+    - data: file tidak ditemukan atau kesalahan lain
+
+INFORMASI TAMBAHAN:
+- Jika request tidak dikenali:
+  - status: ERROR
+  - data: request tidak dikenali

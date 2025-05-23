@@ -57,6 +57,7 @@ class FileInterface:
     #         return dict(status='OK',data_namafile=filename,data_file=isifile)
     #     except Exception as e:
     #         return dict(status='ERROR',data=str(e))
+    
     def get(self,params=[]):
         try:
             filename = params[0]

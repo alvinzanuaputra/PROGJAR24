@@ -45,7 +45,7 @@ class ProcessTheClient(threading.Thread):
             if data:
                 data_str = data.decode()
                 hasil = fp.proses_string(data_str)
-                # Add protocol end marker
+                
                 response = hasil + "\r\n\r\n"
                 self.connection.sendall(response.encode())
             else:

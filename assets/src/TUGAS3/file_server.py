@@ -18,10 +18,14 @@ class ProcessTheClient(threading.Thread):
 
     def run(self):
         while True:
-            data = self.connection.recv(32)
-            
+            data = self.connection.recv(4096)
+            if data:
+                d = data.decode()
+                hasil = fp.proses_string(d)
+                hasil=hasil+"\r\n\r\n"
+                self.connection.sendall(hasil.encode())
             else:
-               
+                break
         self.connection.close()
 
 
@@ -44,11 +48,10 @@ class Server(threading.Thread):
             clt = ProcessTheClient(self.connection, self.client_address)
             clt.start()
             self.the_clients.append(clt)
-    
 
 
 def main():
-    svr = Server(ipaddress='0.0.0.0',port=6666)
+    svr = Server(ipaddress='0.0.0.0',port=56666)
     svr.start()
 
 
