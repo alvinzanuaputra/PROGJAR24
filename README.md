@@ -29,21 +29,21 @@ Edit isi file dengan command : `vim socket_info.py`.
 
 c) Lalu, uncoment pemanggilan fungsi dalam program yaitu pada `get_remote_info()` dan `get_my_socket() ` untuk melihat info remote dan apa nama socketnya.
 
-![alt text](./ima/image.png)
+![alt text](./assets/ima/image.png)
 
 d) Jalankan program socket_info.py di mesin 1 dan mesin 2 dengan command : `python3 socket_info.py`. lalu analisis pada wireshark pilih interface `eth 0` karena ada traffic yang berjalan.
 
 **Pada Mesin-1 :**
 
-![alt text](./ima/image-1.png)
+![alt text](./assets/ima/image-1.png)
 
-![alt text](./ima/image-2.png)
+![alt text](./assets/ima/image-2.png)
 
 **Pada Mesin-2 :**
 
-![alt text](./ima/image-3.png)
+![alt text](./assets/ima/image-3.png)
 
-![alt text](./ima/image-4.png)
+![alt text](./assets/ima/image-4.png)
 
 **Analisis :**
 
@@ -70,13 +70,13 @@ a) Pertama ubah server_address pada file `client.py` pada mesin2 dari `localhost
 
 b) Jalankan program dengan command `python3 server.py` pada mesin1 dan `python3 client.py` pada mesin2.
 
-![alt text](./ima/image-5.png)
+![alt text](./assets/ima/image-5.png)
 
 c) Melakukan analisis dari wireshark yang hasilnya : 
 
 **Pada Mesin 1 :**
 
-![alt text](./ima/image-6.png)
+![alt text](./assets/ima/image-6.png)
 
 **Analisis :**
 
@@ -92,25 +92,25 @@ Langkah - langkah pengerjaan :
 
 a) Ubah port di file `server.py` menjadi `32444` di mesin-1 dengan command : `vim server.py` untuk edit file 
 
-![alt text](./ima/image-7.png)
+![alt text](./assets/ima/image-7.png)
 
 b) Ubah port di file `client.py` menjadi `32444` di mesin-2 dengan command : `vim client.py`
 
-![alt text](./ima/image-8.png)
+![alt text](./assets/ima/image-8.png)
 
 c) Jalankan program `server.py` di mesin-1 dan `client.py` di mesin 2. Kemudian lakukan analisis di wireshark.
 
 **Pada Mesin-1 :**
 
-![alt text](./ima/image-9.png)
+![alt text](./assets/ima/image-9.png)
 
-![alt text](./ima/image-10.png)
+![alt text](./assets/ima/image-10.png)
 
 **Pada Mesin-2 :**
 
-![alt text](./ima/image-11.png)
+![alt text](./assets/ima/image-11.png)
 
-![alt text](./ima/image-12.png)
+![alt text](./assets/ima/image-12.png)
 
 **Analisis :**
 
@@ -126,25 +126,25 @@ Langkah-langkah pengerjaan :
 
 a) Ubah port pada `client.py` di mesin-3 menjadi `32444` dan ubah server address dari `localhost` menjadi `172.16.16.101` dengan command : `vim client.py` untuk mengedit file.
 
-![alt text](./ima/image-13.png)
+![alt text](./assets/ima/image-13.png)
 
 b) Jalankan program server.py di mesin 1 dan client.py di mesin 2 dan mesin 3
 
-![alt text](./ima/image-14.png)
+![alt text](./assets/ima/image-14.png)
 
 c) Lakukan analisis pada wireshark dengan hasil :
 
 **Pada Mesin-1 :**
 
-![alt text](./ima/image-15.png)
+![alt text](./assets/ima/image-15.png)
 
 **Pada Mesin-2 :**
 
-![alt text](./ima/image-16.png)
+![alt text](./assets/ima/image-16.png)
 
 **Pada Mesin-3 :**
 
-![alt text](./ima/image-17.png)
+![alt text](./assets/ima/image-17.png)
 
 **Analisis :**
 
