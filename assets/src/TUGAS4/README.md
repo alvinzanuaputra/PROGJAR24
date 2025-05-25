@@ -44,37 +44,37 @@ Total kombinasi test: 2 x 3 x 3 x 3 = 54 baris
 ```bash
 # 1 worker
 python3 file_server.py --mode thread --workers 1
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1 --output files.csv
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1 --output files.csv
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1 --output files.csv
 
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1 --output files.csv
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1 --output files.csv
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1 --output files.csv
 ```
 
 ```bash
 # 5 worker
 python3 file_server.py --mode thread --workers 5
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5 --output files.csv
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5 --output files.csv
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5 --output files.csv
 
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5 --output files.csv
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5 --output files.csv
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5 --output files.csv
 ```
 
 ```bash
 # 50 worker
 python3 file_server.py --mode thread --workers 50
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50 --output files.csv
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50 --output files.csv
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50 --output files.csv
 
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50 --output files.csv
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50 --output files.csv
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50 --output files.csv
 ```
 
 ## MODE MULTIPROCESS
@@ -82,38 +82,39 @@ python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 56
 ```bash
 # 1 worker
 python3 file_server.py --mode process --workers 1
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1 --output files.csv
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1 --output files.csv
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1 --output files.csv
 
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1 --output files.csv
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1 --output files.csv
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 1 --output files.csv
 ```
 
 ```bash
 # 5 worker
 python3 file_server.py --mode process --workers 5
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5 --output files.csv
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5 --output files.csv
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5 --output files.csv
 
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5 --output files.csv
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5 --output files.csv
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 5 --output files.csv
 ```
 
 ```bash
 # 50 worker
 python3 file_server.py --mode process --workers 50
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50
-python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50 --output files.csv
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50 --output files.csv
+python3 file_client_cli_test.py --mode upload --server 172.16.16.101 --port 5666 --file files/100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50 --output files.csv
 
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50
-python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 10MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50 --output files.csv
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 50MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50 --output files.csv
+python3 file_client_cli_test.py --mode download --server 172.16.16.101 --port 5666 --file 100MB-TESTFILE.ORG.pdf --pool_mode thread --pool_size 50 --output files.csv
 ```
+
 ## Stress Semua testing
 
 ### Bagian Multithreading 

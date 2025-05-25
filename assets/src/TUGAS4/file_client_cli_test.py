@@ -18,7 +18,7 @@ def kirim_perintah(server_ip, server_port, perintah_str=""):
         sock.sendall((perintah_str + "\r\n\r\n").encode())
         data_diterima = ""
         while True:
-            data = sock.recv(4096)
+            data = sock.recv(524288)
             if data:
                 data_diterima += data.decode()
                 if "\r\n\r\n" in data_diterima:
@@ -31,26 +31,112 @@ def kirim_perintah(server_ip, server_port, perintah_str=""):
     finally:
         sock.close()
 
-def upload_remote(server_ip, server_port, filepath=""):
+def tulis_csv_operasi(operasi, filepath, waktu_mulai, waktu_selesai, status, output_file):
+    """Fungsi untuk menulis hasil operasi ke file CSV"""
+    waktu_total = waktu_selesai - waktu_mulai
+    ukuran_file = os.path.getsize(filepath) if os.path.exists(filepath) else 0
+    throughput = ukuran_file / waktu_total if waktu_total > 0 else 0
+    
+    # Konversi ukuran file ke format MB/KB
+    if ukuran_file >= 1024*1024:
+        volume_file_str = f"{round(ukuran_file / 1024 / 1024)}MB"
+    else:
+        volume_file_str = f"{round(ukuran_file / 1024)}KB"
+    
+    # Header CSV
+    header = [
+        "Nomor",
+        "Operasi",
+        "Volume",
+        "Jumlah client worker pool",
+        "Jumlah server worker pool",
+        "Waktu total per client (detik)",
+        "Throughput per client (bytes/detik)",
+        "Jumlah worker client yang sukses dan gagal",
+        "Jumlah worker server yang sukses dan gagal"
+    ]
+    
+    # Data yang akan ditulis
+    data = [
+        1,  # Nomor (default 1 untuk operasi tunggal)
+        operasi,
+        volume_file_str,
+        1,  # Jumlah client worker (1 untuk operasi tunggal)
+        1,  # Jumlah server worker (1 untuk operasi tunggal)
+        round(waktu_total, 3),
+        round(throughput, 3),
+        "1 sukses, 0 gagal" if status == "OK" else "0 sukses, 1 gagal",
+        "1 sukses, 0 gagal" if status == "OK" else "0 sukses, 1 gagal"
+    ]
+    
+    # Tulis ke CSV
+    tulis_header = not os.path.exists(output_file)
+    with open(output_file, mode="a", newline="", encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        if tulis_header:
+            writer.writerow(header)
+        writer.writerow(data)
+    
+    logging.info(f"Data operasi {operasi} telah dicatat ke {output_file}")
+
+def upload_remote(server_ip, server_port, filepath="", output_csv=None):
+    waktu_mulai = time.time()
+    
+    # Cek apakah file ada
+    if not os.path.exists(filepath):
+        error_msg = f"File tidak ditemukan: {filepath}"
+        logging.error(error_msg)
+        if output_csv:
+            waktu_selesai = time.time()
+            tulis_csv_operasi("upload", filepath, waktu_mulai, waktu_selesai, "ERROR", output_csv)
+        return {"status": "ERROR", "data": error_msg}
+    
     try:
         with open(filepath, 'rb') as f:
             encoded = base64.b64encode(f.read()).decode()
         filename = os.path.basename(filepath)
         perintah_str = f"UPLOAD {filename} {encoded}"
-        return kirim_perintah(server_ip, server_port, perintah_str)
+        hasil = kirim_perintah(server_ip, server_port, perintah_str)
+        waktu_selesai = time.time()
+        
+        if output_csv:
+            tulis_csv_operasi("upload", filepath, waktu_mulai, waktu_selesai, 
+                            hasil.get('status', 'ERROR'), output_csv)
+        
+        return hasil
     except Exception as e:
-        return {"status": "ERROR", "data": str(e)}
+        error_msg = f"Error saat upload file: {str(e)}"
+        logging.error(error_msg)
+        waktu_selesai = time.time()
+        if output_csv:
+            tulis_csv_operasi("upload", filepath, waktu_mulai, waktu_selesai, 
+                            "ERROR", output_csv)
+        return {"status": "ERROR", "data": error_msg}
 
-def download_remote(server_ip, server_port, filename=""):
+def download_remote(server_ip, server_port, filename="", output_csv=None):
+    waktu_mulai = time.time()
     perintah_str = f"GET {filename}"
     result = kirim_perintah(server_ip, server_port, perintah_str)
+    
     if result.get('status') == 'OK':
         namafile = result.get('data_namafile')
         isifile = base64.b64decode(result.get('data_file'))
         save_path = f"unduh_{namafile}"
         with open(save_path, 'wb') as fp:
             fp.write(isifile)
+        waktu_selesai = time.time()
+        
+        if output_csv:
+            tulis_csv_operasi("download", save_path, waktu_mulai, waktu_selesai, 
+                            "OK", output_csv)
+            
         logging.info(f"File {namafile} berhasil diunduh ke {save_path}")
+    else:
+        waktu_selesai = time.time()
+        if output_csv:
+            tulis_csv_operasi("download", f"unduh_{filename}", waktu_mulai, 
+                            waktu_selesai, "ERROR", output_csv)
+    
     return result
 
 def list_remote(server_ip, server_port):
@@ -123,7 +209,7 @@ def stress_test(server_ip, server_port, operasi, filepath, mode_pool, ukuran_poo
         nomor, operasi, volume_file_str, ukuran_pool, worker_server,
         round(waktu_rata, 3), round(throughput / ukuran_pool if ukuran_pool > 0 else 0, 3),
         f"{jumlah_sukses} sukses, {jumlah_gagal} gagal",
-        f"{worker_server} server worker (input manual)"
+        f"{worker_server} sukses, {jumlah_gagal} gagal"
     ]
     
     # Tulis ke CSV
@@ -208,14 +294,24 @@ def main():
         if not args.file:
             print("Mode upload memerlukan argumen --file")
             return
-        res = upload_remote(args.server, args.port, args.file)
+            
+        # Cek keberadaan file sebelum upload
+        if not os.path.exists(args.file):
+            print(f"ERROR: File tidak ditemukan: {args.file}")
+            print("Pastikan file yang akan diupload berada di direktori yang benar")
+            print(f"Direktori saat ini: {os.getcwd()}")
+            print("Daftar file di direktori saat ini:")
+            print("\n".join(os.listdir(".")))
+            return
+            
+        res = upload_remote(args.server, args.port, args.file, args.output)
         print("Hasil upload:", res)
         
     elif args.mode == "download":
         if not args.file:
             print("Mode download memerlukan argumen --file")
             return
-        res = download_remote(args.server, args.port, args.file)
+        res = download_remote(args.server, args.port, args.file, args.output)
         print("Hasil download:", res)
         
     elif args.mode == "list":
@@ -227,7 +323,7 @@ def main():
             print("Stress test memerlukan argumen --file")
             return
         stress_test(
-            args.server, args.port, "upload", args.file,
+            args.server, args.port, "download", args.file,
             args.pool_mode, args.pool_size, args.server_workers,
             args.nomor, args.output
         )
