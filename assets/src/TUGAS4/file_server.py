@@ -1,226 +1,237 @@
-from socket import *
 import socket
-import threading
-import logging
-import time
-import sys
+import os
 import argparse
+import logging
+import base64
+import json
+import sys
+import threading
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-import multiprocessing as mp
 
-from file_protocol import FileProtocol
+HOST = '0.0.0.0'
+PORT = 5666
+STORAGE_DIR = 'storage'
+LOG_FILE = 'server5666.log'
 
-class LegacyServer(threading.Thread):
-    """Original threading implementation for comparison"""
-    def __init__(self, ipaddress='0.0.0.0', port=8889):
-        self.ipinfo = (ipaddress, port)
-        self.the_clients = []
-        self.my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        threading.Thread.__init__(self)
+os.makedirs(STORAGE_DIR, exist_ok=True)
 
-    def run(self):
-        logging.warning(f"Legacy server running at {self.ipinfo}")
-        self.my_socket.bind(self.ipinfo)
-        self.my_socket.listen(1)
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(threadName)s - %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_FILE),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
+# Counter untuk tracking sukses/gagal worker
+sukses_counter = 0
+gagal_counter = 0
+counter_lock = threading.Lock()
+
+def tambah_sukses():
+    global sukses_counter
+    with counter_lock:
+        sukses_counter += 1
+
+def tambah_gagal():
+    global gagal_counter
+    with counter_lock:
+        gagal_counter += 1
+
+def ambil_counter():
+    with counter_lock:
+        return sukses_counter, gagal_counter
+
+def reset_counter():
+    global sukses_counter, gagal_counter
+    with counter_lock:
+        sukses_counter = 0
+        gagal_counter = 0
+
+def handle_client(conn, addr):
+    thread_name = threading.current_thread().name
+    try:
+        logging.info(f"Koneksi dari {addr}")
+
+        # Terima data sampai \r\n\r\n
+        data_received = ""
         while True:
-            connection, client_address = self.my_socket.accept()
-            logging.warning(f"Connection from {client_address}")
-
-            clt = ProcessTheClient(connection, client_address)
-            clt.start()
-            self.the_clients.append(clt)
-
-class ProcessTheClient(threading.Thread):
-    """Legacy client processing thread"""
-    def __init__(self, connection, address):
-        self.connection = connection
-        self.address = address
-        threading.Thread.__init__(self)
-
-    def run(self):
-        fp = FileProtocol()
-        while True:
-            data = self.connection.recv(1024)
-            if data:
-                data_str = data.decode()
-                hasil = fp.proses_string(data_str)
-                
-                response = hasil + "\r\n\r\n"
-                self.connection.sendall(response.encode())
-            else:
+            data = conn.recv(524288).decode()
+            if not data:
                 break
-        self.connection.close()
+            data_received += data
+            if "\r\n\r\n" in data_received:
+                break
+        logging.debug(f"Data diterima (dipotong): {data_received[:100]}")
 
-class PoolServer:
-    """Enhanced server with thread/process pool support"""
-    def __init__(self, ipaddress='0.0.0.0', port=8889, max_workers=5, use_multiprocessing=False):
-        self.ipinfo = (ipaddress, port)
-        self.max_workers = max_workers
-        self.use_multiprocessing = use_multiprocessing
-        self.my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        
-        # Statistics tracking
-        self.active_workers = 0
-        self.successful_workers = 0
-        self.failed_workers = 0
-        self.total_requests = 0
-        self.worker_lock = threading.Lock()
-        
-        # Create executor based on type
-        if use_multiprocessing:
-            self.executor = ProcessPoolExecutor(max_workers=max_workers)
-            self.server_type = "multiprocessing"
-        else:
-            self.executor = ThreadPoolExecutor(max_workers=max_workers)
-            self.server_type = "multithreading"
-    
-    def process_client_connection(self, connection, client_address):
-        """Process client connection in worker thread/process"""
-        fp = FileProtocol()
-        
-        with self.worker_lock:
-            self.active_workers += 1
-            self.total_requests += 1
-            current_request = self.total_requests
-        
-        try:
-            logging.warning(f"Worker processing connection from {client_address} (Request #{current_request})")
-            
-            while True:
-                data = connection.recv(1024)
-                if data:
-                    data_str = data.decode()
-                    if data_str.strip():  # Only process non-empty commands
-                        hasil = fp.proses_string(data_str)
-                        # Add protocol end marker
-                        response = hasil + "\r\n\r\n"
-                        connection.sendall(response.encode())
-                else:
-                    break
-            
-            with self.worker_lock:
-                self.successful_workers += 1
-                
-        except Exception as e:
-            logging.error(f"Error processing client {client_address}: {e}")
-            with self.worker_lock:
-                self.failed_workers += 1
-        finally:
+        parts = data_received.strip().split()
+        if len(parts) < 1:
+            resp = json.dumps({"status": "ERROR", "data": "Format perintah tidak valid"}) + "\r\n\r\n"
+            conn.sendall(resp.encode())
+            tambah_gagal()
+            return
+
+        command = parts[0].upper()
+
+        if command == "LIST":
+            # Handle LIST command
             try:
-                connection.close()
-            except:
-                pass
-            with self.worker_lock:
-                self.active_workers -= 1
+                filelist = os.listdir(STORAGE_DIR)
+                filelist = [f for f in filelist if os.path.isfile(os.path.join(STORAGE_DIR, f))]
+                resp = json.dumps({"status": "OK", "data": filelist}) + "\r\n\r\n"
+                conn.sendall(resp.encode())
+                logging.info(f"Mengirim daftar file ke {addr}")
+                tambah_sukses()
+            except Exception as e:
+                logging.error(f"Error mendapatkan daftar file: {e}")
+                resp = json.dumps({"status": "ERROR", "data": f"Gagal mendapatkan daftar file: {str(e)}"}) + "\r\n\r\n"
+                conn.sendall(resp.encode())
+                tambah_gagal()
 
-    def run(self):
-        """Run the server"""
-        logging.warning(f"Pool server running at {self.ipinfo}")
-        logging.warning(f"Mode: {self.server_type} with {self.max_workers} workers")
-        
-        self.my_socket.bind(self.ipinfo)
-        self.my_socket.listen(10)  # Increased backlog
-        
-        try:
-            while True:
-                connection, client_address = self.my_socket.accept()
-                logging.warning(f"New connection from {client_address}")
+        elif command == "UPLOAD":
+            if len(parts) < 3:
+                resp = json.dumps({"status": "ERROR", "data": "Tidak ada data untuk diunggah"}) + "\r\n\r\n"
+                conn.sendall(resp.encode())
+                tambah_gagal()
+                return
+            
+            filename = parts[1]
+            encoded_data = " ".join(parts[2:])
+            filepath = os.path.join(STORAGE_DIR, filename)
+            
+            try:
+                file_data = base64.b64decode(encoded_data)
+                with open(filepath, 'wb') as f:
+                    f.write(file_data)
+                logging.info(f"File {filename} disimpan dari {addr}")
+                resp = json.dumps({"status": "OK", "data": f"File {filename} berhasil diunggah"}) + "\r\n\r\n"
+                conn.sendall(resp.encode())
+                tambah_sukses()
+            except Exception as e:
+                logging.error(f"Error decode/simpan file {filename}: {e}")
+                resp = json.dumps({"status": "ERROR", "data": f"Gagal mengunggah file: {str(e)}"}) + "\r\n\r\n"
+                conn.sendall(resp.encode())
+                tambah_gagal()
+
+        elif command == "GET":
+            if len(parts) < 2:
+                resp = json.dumps({"status": "ERROR", "data": "Nama file tidak disediakan"}) + "\r\n\r\n"
+                conn.sendall(resp.encode())
+                tambah_gagal()
+                return
                 
-                # Submit task to executor
-                future = self.executor.submit(
-                    self.process_client_connection, 
-                    connection, 
-                    client_address
-                )
-                
-        except KeyboardInterrupt:
-            logging.warning("Server shutting down...")
-        except Exception as e:
-            logging.error(f"Server error: {e}")
-        finally:
-            self.shutdown()
-    
-    def shutdown(self):
-        """Gracefully shutdown the server"""
-        logging.warning("Shutting down server...")
-        
-        # Close socket
+            filename = parts[1]
+            filepath = os.path.join(STORAGE_DIR, filename)
+            
+            if not os.path.exists(filepath):
+                resp = json.dumps({"status": "ERROR", "data": "File tidak ditemukan"}) + "\r\n\r\n"
+                conn.sendall(resp.encode())
+                tambah_gagal()
+                return
+            
+            try:
+                with open(filepath, 'rb') as f:
+                    file_data = f.read()
+                encoded_data = base64.b64encode(file_data).decode()
+                resp = json.dumps({
+                    "status": "OK",
+                    "data_namafile": filename,
+                    "data_file": encoded_data
+                }) + "\r\n\r\n"
+                conn.sendall(resp.encode())
+                logging.info(f"File {filename} dikirim ke {addr}")
+                tambah_sukses()
+            except Exception as e:
+                logging.error(f"Error membaca file {filename}: {e}")
+                resp = json.dumps({"status": "ERROR", "data": f"Gagal membaca file: {str(e)}"}) + "\r\n\r\n"
+                conn.sendall(resp.encode())
+                tambah_gagal()
+
+        else:
+            resp = json.dumps({"status": "ERROR", "data": "Perintah tidak valid"}) + "\r\n\r\n"
+            conn.sendall(resp.encode())
+            tambah_gagal()
+
+    except Exception as e:
+        logging.error(f"Exception menangani klien {addr}: {e}")
+        resp = json.dumps({"status": "ERROR", "data": f"Error server: {str(e)}"}) + "\r\n\r\n"
         try:
-            self.my_socket.close()
+            conn.sendall(resp.encode())
+            tambah_gagal()
         except:
             pass
-        
-        # Shutdown executor
-        self.executor.shutdown(wait=True)
-        
-        # Print final statistics
-        stats = self.get_worker_stats()
-        logging.warning(f"Final server statistics: {stats}")
-    
-    def get_worker_stats(self):
-        """Get worker statistics"""
-        with self.worker_lock:
-            return {
-                'server_type': self.server_type,
-                'max_workers': self.max_workers,
-                'active_workers': self.active_workers,
-                'successful_workers': self.successful_workers,
-                'failed_workers': self.failed_workers,
-                'total_requests': self.total_requests
-            }
+    finally:
+        conn.close()
+        logging.info(f"Koneksi dari {addr} ditutup")
+
+def start_server_single():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server_socket.bind((HOST, PORT))
+        server_socket.listen(100)
+        logging.info(f"Server single-threaded dimulai di {HOST}:{PORT}")
+
+        while True:
+            conn, addr = server_socket.accept()
+            logging.info(f"Koneksi diterima dari {addr}")
+            handle_client(conn, addr)
+
+def start_server_threaded(workers):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server_socket.bind((HOST, PORT))
+        server_socket.listen(100)
+        logging.info(f"Server thread-pool dimulai di {HOST}:{PORT} dengan {workers} worker")
+
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            try:
+                while True:
+                    conn, addr = server_socket.accept()
+                    logging.info(f"Koneksi diterima dari {addr}")
+                    executor.submit(handle_client, conn, addr)
+            except KeyboardInterrupt:
+                logging.info("Server dihentikan dengan KeyboardInterrupt")
+
+def start_server_process(workers):
+    # Note: Process pool tidak ideal untuk socket handling karena socket tidak bisa di-serialize
+    # Menggunakan pendekatan single-threaded untuk process mode
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server_socket.bind((HOST, PORT))
+        server_socket.listen(100)
+        logging.info(f"Server process-pool dimulai di {HOST}:{PORT} dengan {workers} worker (mode sinkron)")
+
+        while True:
+            try:
+                conn, addr = server_socket.accept()
+                logging.info(f"Koneksi diterima dari {addr}")
+                handle_client(conn, addr)
+            except KeyboardInterrupt:
+                logging.info("Server dihentikan dengan KeyboardInterrupt")
+                break
 
 def main():
-    parser = argparse.ArgumentParser(description='Enhanced File Server')
-    parser.add_argument('--port', type=int, default=8889, help='Server port')
-    parser.add_argument('--host', default='0.0.0.0', help='Server host')
-    parser.add_argument('--workers', type=int, default=5, help='Number of worker threads/processes')
-    parser.add_argument('--multiprocessing', action='store_true', 
-                       help='Use multiprocessing instead of threading')
-    parser.add_argument('--legacy', action='store_true', 
-                       help='Use legacy threading implementation')
-    parser.add_argument('--verbose', action='store_true', help='Enable verbose logging')
-    
+    parser = argparse.ArgumentParser(description="File server dengan berbagai mode concurrency.")
+    parser.add_argument('--mode', choices=['single', 'thread', 'process'], default='single', help="Mode untuk menjalankan server")
+    parser.add_argument('--workers', type=int, default=1, help="Jumlah worker thread atau process")
     args = parser.parse_args()
-    
-    # Configure logging
-    log_level = logging.DEBUG if args.verbose else logging.WARNING
-    logging.basicConfig(
-        level=log_level,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler(f'server_{args.port}.log')
-        ]
-    )
+
+    reset_counter()
     
     try:
-        if args.legacy:
-            print(f"Starting legacy server on {args.host}:{args.port}")
-            server = LegacyServer(ipaddress=args.host, port=args.port)
-            server.start()
-            server.join()
+        if args.mode == 'single':
+            start_server_single()
+        elif args.mode == 'thread':
+            start_server_threaded(args.workers)
+        elif args.mode == 'process':
+            start_server_process(args.workers)
         else:
-            print(f"Starting {'multiprocessing' if args.multiprocessing else 'multithreading'} "
-                  f"pool server on {args.host}:{args.port} with {args.workers} workers")
-            
-            server = PoolServer(
-                ipaddress=args.host,
-                port=args.port,
-                max_workers=args.workers,
-                use_multiprocessing=args.multiprocessing
-            )
-            server.run()
-            
+            logging.error("Mode tidak valid dipilih.")
     except KeyboardInterrupt:
-        print("\nServer stopped by user")
-        if not args.legacy:
-            stats = server.get_worker_stats()
-            print(f"Final statistics: {stats}")
-    except Exception as e:
-        print(f"Server error: {e}")
-        logging.error(f"Server error: {e}")
+        sukses, gagal = ambil_counter()
+        logging.info(f"Server dihentikan. Worker sukses: {sukses}, Worker gagal: {gagal}")
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
